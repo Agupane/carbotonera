@@ -6,24 +6,31 @@ import { StatusBar } from '@ionic-native/status-bar';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
+import {BotonesPage} from "../pages/botones/botones";
+import {BotoneraSharedModule} from "../botonera-shared/botonera-shared.module";
+import {NativeAudio} from "@ionic-native/native-audio";
 
 @NgModule({
   declarations: [
     MyApp,
-    HomePage
+    HomePage,
+    BotonesPage
   ],
   imports: [
     BrowserModule,
-    IonicModule.forRoot(MyApp)
+    IonicModule.forRoot(MyApp),
+    BotoneraSharedModule.forRoot(),
   ],
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
-    HomePage
+    HomePage,
+    BotonesPage
   ],
   providers: [
     StatusBar,
     SplashScreen,
+    NativeAudio,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })
