@@ -48,7 +48,7 @@ export class SoundPlayerService {
     this.sounds[5] = {
       uid: '5',
       soundPath: 'assets/audios/mohametSalaverry.ogg',
-      name: 'Mohamet Salaverry',
+      name: 'Mohamet Salaberry',
       audioAsset: null
     };
 
