@@ -8,6 +8,7 @@ export class SoundPlayerService {
   public sounds : soundBotonera[];
   private currentPlayingSound: soundBotonera;
   public static soundPlayingEvent: EventEmitter<boolean>;
+  private static isCurrentPlaying: boolean;
 
   constructor(private nativeAudio: NativeAudio, private platform: Platform){
     this.sounds = [];
@@ -51,9 +52,11 @@ export class SoundPlayerService {
       audioAsset: null
     };
 
+    this.preloadSounds();
     /** Example loading the first audio **/
     this.currentPlayingSound = this.sounds[0];
     SoundPlayerService.soundPlayingEvent = new EventEmitter<boolean>();
+    SoundPlayerService.isCurrentPlaying = false;
   }
 
 
@@ -61,45 +64,87 @@ export class SoundPlayerService {
     return this.sounds;
   }
 
-  playSound(selectedSound :soundBotonera){
-    console.log("Playing sound: ", selectedSound);
-    if(this.platform.is('cordova')){
-      this.nativeAudio.stop(this.currentPlayingSound.uid)
-        .then(data => {
-          console.log("Stoped current played audio");
-          this.playSoundOnDevice(selectedSound);
-        })
-        .catch(error =>{
-          console.log("Error while trying to stop current sound");
-          this.playSoundOnDevice(selectedSound);
-        });
-    }
-    else{
-      /** We stop the playing of the current audio **/
-      if(this.currentPlayingSound.audioAsset !=null ){
-        this.currentPlayingSound.audioAsset.pause();
-      }
-      this.playSoundOnBrowser(selectedSound);
+  /** Preloads the list of sounds on the device **/
+  private preloadSounds(){
+    for(let soundIterator of this.sounds) {
+      this.nativeAudio.preloadSimple(soundIterator.uid, soundIterator.soundPath)
+        .then(
+          onSuccess => {
+            console.log("Success loading audio file ", onSuccess);
+          },
+          onError =>{
+            console.log("Error trying to load audio file ",onError);
+           // this.nativeAudio.unload(soundIterator.uid);
+            SoundPlayerService.soundPlayingEvent.emit(false);
+            SoundPlayerService.isCurrentPlaying = false;
+          });
     }
 
   }
 
-  private playSoundOnDevice(selectedSound : soundBotonera){
-    this.nativeAudio.preloadSimple(selectedSound.uid, selectedSound.soundPath)
-      .then(
-        onSuccess => {
-          console.log("Success loading audio file ", onSuccess);
-          this.nativeAudio.play(selectedSound.uid, () =>{
-            this.currentPlayingSound = selectedSound;
-            SoundPlayerService.soundPlayingEvent.emit(true);
+  stopCurrentPlayingSound(){
+    console.log("Stopping current playing sound: ");
+    let self = this;
+    return new Promise(function(resolve,reject) {
+      if (SoundPlayerService.isCurrentPlaying) {
+        if(self.platform.is('cordova')) {
+          self.nativeAudio.stop(self.currentPlayingSound.uid)
+            .then(data => {
+              console.log("Stoped current played audio");
+              SoundPlayerService.soundPlayingEvent.emit(false);
+              SoundPlayerService.isCurrentPlaying = false;
+              resolve(SoundPlayerService.isCurrentPlaying);
+            })
+            .catch(error => {
+              console.log("Error while trying to stop current sound");
+              reject(SoundPlayerService.isCurrentPlaying);
+            });
+        }
+        else{
+          /** We stop the playing of the current audio **/
+          if (self.currentPlayingSound.audioAsset != null) {
+            this.currentPlayingSound.audioAsset.pause();
+            SoundPlayerService.soundPlayingEvent.emit(false);
+            SoundPlayerService.isCurrentPlaying = false;
+            resolve(SoundPlayerService.isCurrentPlaying);
+          }
+        }
+      }
+      else{
+        resolve(SoundPlayerService.isCurrentPlaying);
+      }
+    });
+  }
 
-            console.log("Carbaudio nr: "+selectedSound.uid+" is being played");
-          });
-        },
-        onError =>{
-          console.log("Error trying to load audio file ",onError);
-          SoundPlayerService.soundPlayingEvent.emit(false);
-        });
+  playSound(selectedSound :soundBotonera){
+    console.log("Playing sound: ", selectedSound);
+    /** First we stop the current playing sound **/
+    this.stopCurrentPlayingSound()
+      .then(data =>{
+        /** Then we just play on the device or browser **/
+        if(this.platform.is('cordova')){
+          this.playSoundOnDevice(selectedSound);
+        }
+        else{
+          this.playSoundOnBrowser(selectedSound);
+        }
+      })
+      .catch(error=>{
+        console.log("Error while tried to stop current sound ", error);
+      });
+  }
+
+  private playSoundOnDevice(selectedSound : soundBotonera){
+    console.log("Playing sound on device");
+    SoundPlayerService.soundPlayingEvent.emit(true);
+    SoundPlayerService.isCurrentPlaying = true;
+    this.currentPlayingSound = selectedSound;
+    this.nativeAudio.play(selectedSound.uid, () =>{
+      /** The sound has ended, now changing the bg again **/
+      console.log("Carbaudio nr: "+selectedSound.uid+" has been played");
+      SoundPlayerService.soundPlayingEvent.emit(false);
+      SoundPlayerService.isCurrentPlaying = false;
+    });
   }
 
   private playSoundOnBrowser(selectedSound : soundBotonera){
@@ -109,8 +154,10 @@ export class SoundPlayerService {
     this.currentPlayingSound.audioAsset = audioAsset;
     audioAsset.play();
     SoundPlayerService.soundPlayingEvent.emit(true);
+    SoundPlayerService.isCurrentPlaying = true;
     audioAsset.onended = function(){
       SoundPlayerService.soundPlayingEvent.emit(false);
+      SoundPlayerService.isCurrentPlaying = false;
     }
 
   }

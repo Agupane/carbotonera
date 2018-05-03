@@ -1,7 +1,7 @@
 {
-  "name": "carbatonera",
+  "name": "carbotonera",
   "version": "0.0.1",
-  "author": "Ionic Framework",
+  "author": "Agustin Pane",
   "homepage": "http://ionicframework.com/",
   "private": true,
   "scripts": {
@@ -43,7 +43,7 @@
     "@ionic/app-scripts": "3.1.9",
     "typescript": "~2.6.2"
   },
-  "description": "An Ionic project",
+  "description": "Una botonera ejemplo en ionic",
   "cordova": {
     "plugins": {
       "cordova-plugin-nativeaudio": {},
