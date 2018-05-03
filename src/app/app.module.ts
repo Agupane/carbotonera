@@ -5,7 +5,6 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { StatusBar } from '@ionic-native/status-bar';
 
 import { MyApp } from './app.component';
-import { HomePage } from '../pages/home/home';
 import {BotonesPage} from "../pages/botones/botones";
 import {BotoneraSharedModule} from "../botonera-shared/botonera-shared.module";
 import {NativeAudio} from "@ionic-native/native-audio";
@@ -13,7 +12,6 @@ import {NativeAudio} from "@ionic-native/native-audio";
 @NgModule({
   declarations: [
     MyApp,
-    HomePage,
     BotonesPage
   ],
   imports: [
@@ -24,7 +22,6 @@ import {NativeAudio} from "@ionic-native/native-audio";
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
-    HomePage,
     BotonesPage
   ],
   providers: [
